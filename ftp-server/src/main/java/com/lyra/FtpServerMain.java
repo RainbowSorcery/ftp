@@ -1,5 +1,12 @@
 package com.lyra;
 
+import com.lyra.config.BeanScanConfig;
+import com.lyra.handle.CommandHandle;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -8,8 +15,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
 
+@Component
 public class FtpServerMain {
+
     public static void main(String[] args) {
+        ApplicationContext applicationContext = new AnnotationConfigApplicationContext(BeanScanConfig.class);
+        CommandHandle bean = applicationContext.getBean(CommandHandle.class);
+
+        System.out.println(bean);
         try {
             Selector selector = Selector.open();
             ServerSocketChannel socketChannel = ServerSocketChannel.open();
@@ -34,11 +47,7 @@ public class FtpServerMain {
                                 accept.configureBlocking(false);
                                 accept.register(selector, SelectionKey.OP_READ);
 
-                                String response = "220 (lyraFTP v1.0.0)\r\n";
-                                ByteBuffer buffer = ByteBuffer.allocate(response.getBytes().length);
-                                buffer.put(response.getBytes());
-                                buffer.flip();
-                                accept.write(buffer);
+
                             }
                         }
 
@@ -53,74 +62,11 @@ public class FtpServerMain {
                                 buffer.get(bytes);
                                 String requestBody = new String(bytes);
                                 System.out.println("Message:" + requestBody);
-
-                                if (requestBody.contains("SYST")) {
-                                    String response = "200 (windows 10)\r\n";
-                                    byte[] bytes1 = response.getBytes(StandardCharsets.UTF_8);
-                                    // 创建buffer
-                                    ByteBuffer allocate = ByteBuffer.allocate(bytes1.length);
-                                    // 在buffer中写数据
-                                    allocate.put(bytes1);
-                                    // 反转buffer 由写模式切换为读模式
-                                    allocate.flip();
-                                    // 往客户端写入数据
-                                    clientSocketChannel.write(allocate);
-                                }
-                                if (requestBody.contains("AUTH TLS")) {
-                                    String response = "332 (lyraFTP v1.0.0)\r\n";
-                                    byte[] bytes1 = response.getBytes(StandardCharsets.UTF_8);
-                                    // 创建buffer
-                                    ByteBuffer allocate = ByteBuffer.allocate(bytes1.length);
-                                    // 在buffer中写数据
-                                    allocate.put(bytes1);
-                                    // 反转buffer 由写模式切换为读模式
-                                    allocate.flip();
-                                    // 往客户端写入数据
-                                    clientSocketChannel.write(allocate);
-                                }
-
-                                if (requestBody.contains("lyra")) {
-                                    String response = "331 (lyraFTP v1.0.0)\r\n";
-                                    byte[] bytes1 = response.getBytes(StandardCharsets.UTF_8);
-                                    // 创建buffer
-                                    ByteBuffer allocate = ByteBuffer.allocate(bytes1.length);
-                                    // 在buffer中写数据
-                                    allocate.put(bytes1);
-                                    // 反转buffer 由写模式切换为读模式
-                                    allocate.flip();
-                                    // 往客户端写入数据
-                                    clientSocketChannel.write(allocate);
-                                }
-
-                                if (requestBody.contains("365373011")) {
-                                    String response = "230 (lyraFTP v1.0.0)\r\n";
-                                    byte[] bytes1 = response.getBytes(StandardCharsets.UTF_8);
-                                    // 创建buffer
-                                    ByteBuffer allocate = ByteBuffer.allocate(bytes1.length);
-                                    // 在buffer中写数据
-                                    allocate.put(bytes1);
-                                    // 反转buffer 由写模式切换为读模式
-                                    allocate.flip();
-                                    // 往客户端写入数据
-                                    clientSocketChannel.write(allocate);
-                                }
-
-                                if (requestBody.contains("PWD")) {
-                                    String response = "257 \"/\" is current directory.\r\n";
-                                    byte[] bytes1 = response.getBytes(StandardCharsets.UTF_8);
-                                    // 创建buffer
-                                    ByteBuffer allocate = ByteBuffer.allocate(bytes1.length);
-                                    // 在buffer中写数据
-                                    allocate.put(bytes1);
-                                    // 反转buffer 由写模式切换为读模式
-                                    allocate.flip();
-                                    // 往客户端写入数据
-                                    clientSocketChannel.write(allocate);
-                                }
-
                             }
                         }
                     }
+
+                    iterator.remove();
                 }
             }
         } catch (IOException e) {
