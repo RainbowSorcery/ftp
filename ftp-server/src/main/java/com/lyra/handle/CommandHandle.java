@@ -9,10 +9,14 @@ import java.nio.channels.SocketChannel;
 @Component
 public class CommandHandle {
     public void welcome(SocketChannel socketChannel) throws IOException {
-        String responseBody = "220 (lyraFTP v1.0.0)\r\n";
+        String responseBody = "220 welcome to LyraFTP Server\r\n";
         ByteBuffer buffer = ByteBuffer.allocate(responseBody.getBytes().length);
         buffer.put(responseBody.getBytes());
         buffer.flip();
         socketChannel.write(buffer);
+    }
+
+    public boolean checkUserName(String username) {
+        return false;
     }
 }
