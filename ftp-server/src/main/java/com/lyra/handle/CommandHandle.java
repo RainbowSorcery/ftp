@@ -17,6 +17,6 @@ public class CommandHandle {
     }
 
     public boolean checkUserName(String username) {
-        return false;
+        return true;
     }
 }

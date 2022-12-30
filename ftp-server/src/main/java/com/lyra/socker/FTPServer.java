@@ -1,6 +1,7 @@
 package com.lyra.socker;
 
 import com.lyra.handle.CommandHandle;
+import com.lyra.utils.RequestParsUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class FTPServer {
 
     @Autowired
     private CommandHandle commandHandle;
+
+    @Autowired
+    private RequestParsUtils requestParsUtils;
 
     public void start() {
         Selector serverSelector = null;
