@@ -17,13 +17,15 @@ public class NativeFileSystemImpl implements NativeFileSystem {
      */
     private File root;
 
-
-
-
+    /**
+     * 当前目录
+     */
+    private File currentFile;
 
     public NativeFileSystemImpl(File root) {
         if (root.isDirectory()) {
             this.root = root;
+            this.currentFile = root;
             if (!root.exists()) {
                 if (root.mkdirs()) {
                     System.out.println("目录不存在，创建目录成功.");
@@ -59,6 +61,11 @@ public class NativeFileSystemImpl implements NativeFileSystem {
         return list;
     }
 
+    @Override
+    public String getRootPath() {
+        return root.getPath();
+    }
+
 
     public File getRoot() {
         return root;
@@ -69,4 +76,16 @@ public class NativeFileSystemImpl implements NativeFileSystem {
     }
 
 
+    @Override
+    public String getCurrentFilePath() {
+        return currentFile.getPath();
+    }
+
+    public File getCurrentFile() {
+        return currentFile;
+    }
+
+    public void setCurrentFile(File currentFile) {
+        this.currentFile = currentFile;
+    }
 }

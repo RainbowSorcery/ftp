@@ -8,14 +8,21 @@ public class CommandUtils {
         Map<String, String> resultMap = new HashMap<>();
 
         command = command.replaceAll("\r\n", "");
+        StringBuilder valueBuffer = new StringBuilder();
 
         String[] s = command.split(" ");
-        if (s.length == 2) {
-            resultMap.put("key", s[0]);
-            resultMap.put("value", s[1]);
-        } else {
-            resultMap.put("key", s[0]);
+        boolean flag = true;
+        for (int i = 0; i < s.length; i++) {
+            if (i == 0) {
+                resultMap.put("key", s[i]);
+            } else if (i == s.length - 1) {
+                valueBuffer.append(s[i]);
+            } else {
+                valueBuffer.append(s[i]).append(" ");
+            }
         }
+
+        resultMap.put("value", valueBuffer.toString());
 
         return resultMap;
     }

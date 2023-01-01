@@ -7,6 +7,7 @@ import com.lyra.system.NativeFileSystem;
 import com.lyra.system.impl.NativeFileSystemImpl;
 import com.lyra.utils.CommandUtils;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -75,9 +76,11 @@ public class FTPServer {
                             SocketChannel accept = clientServerSocketChannel.accept();
                             Connection connection = new Connection();
                             // 设置初始文件目录
-                            NativeFileSystem nativeFileSystem = new NativeFileSystemImpl(new File("c://"));
+                            NativeFileSystem nativeFileSystem = new NativeFileSystemImpl(new File("C:\\Tutorial"));
                             connection.setNativeFileSystem(nativeFileSystem);
                             connection.setAuth(false);
+                            // 默认传输类型为ASCII
+                            connection.setAscii(true);
 
                             connectionMap.put(accept.getRemoteAddress().toString(), connection);
                             connection.connectionSuccessful(accept);
@@ -102,6 +105,8 @@ public class FTPServer {
                                 Connection connection = connectionMap.get(channel.getRemoteAddress().toString());
 
                                 String readLine = new String(bytes);
+
+                                System.out.println(readLine);
 
                                 Map<String, String> commandProcessMap = CommandUtils.processCommand(readLine);
                                 String key = commandProcessMap.get("key");
