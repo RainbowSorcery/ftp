@@ -21,6 +21,8 @@ import java.util.Set;
 public class FTPServer {
     private Map<String, Connection> connectionMap = new HashMap<>();
 
+    private String fileSystemDir = "";
+
     public void start(Integer port) {
         if (port == null) {
             throw new RuntimeException("端口号为空");
@@ -76,7 +78,7 @@ public class FTPServer {
                             SocketChannel accept = clientServerSocketChannel.accept();
                             Connection connection = new Connection();
                             // 设置初始文件目录
-                            NativeFileSystem nativeFileSystem = new NativeFileSystemImpl(new File("C:\\Tutorial"));
+                            NativeFileSystem nativeFileSystem = new NativeFileSystemImpl(new File(fileSystemDir));
                             connection.setNativeFileSystem(nativeFileSystem);
                             connection.setAuth(false);
                             // 默认传输类型为ASCII
@@ -126,5 +128,13 @@ public class FTPServer {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    public String getFileSystemDir() {
+        return fileSystemDir;
+    }
+
+    public void setFileSystemDir(String fileSystemDir) {
+        this.fileSystemDir = fileSystemDir;
     }
 }

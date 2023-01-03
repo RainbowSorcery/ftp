@@ -101,15 +101,22 @@ public class CommandInfosSingle {
 
                 NativeFileSystem nativeFileSystem = connection.getNativeFileSystem();
 
+                String currentPath = "";
 
-                String currentPath = nativeFileSystem.getCurrentFilePath();
+                if (nativeFileSystem.getCurrentFile() == null) {
+                    currentPath = nativeFileSystem.getRootPath();
+                } else {
+                    currentPath =  nativeFileSystem.getCurrentFilePath();
+                }
+
+
                 //先获取最后一个  \ 所在的位置
                 int index1 = currentPath.lastIndexOf(nativeFileSystem.getRootPath());
                 //然后获取从最后一个\所在索引+1开始 至 字符串末尾的字符
                 String path = currentPath.substring(index1 + nativeFileSystem.getRootPath().length());
 
 
-                String responseBody = "257 " + "\"" + path + "/" + "\"" + "\r\n";
+                String responseBody = "257 " + "\"" + path + "\\" + "\"" + "\r\n";
 
                 SocketChannelUtils.writeData(socketChannel, responseBody);
             }
