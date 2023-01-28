@@ -7,10 +7,7 @@ import com.lyra.system.NativeFileSystem;
 import com.lyra.utils.DateUtils;
 import com.lyra.utils.SocketChannelUtils;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Date;
@@ -173,6 +170,7 @@ public class CommandInfosSingle {
                 Connection connection = (Connection) pram;
 
                 // 阻塞 知道channel建立完毕 也就是Connect给i哦那中dataTransferSocket成员变量赋值完成
+                // todo 使用线程池进行优化
                 DataChannelThread dataChannelThread = new DataChannelThread(connection, socketChannel);
                 new Thread(dataChannelThread).start();
             }
@@ -201,7 +199,7 @@ public class CommandInfosSingle {
                         } else {
                             stringBuffer.append(" ").append(listFile.length()).append(" ");
                         }
-                        stringBuffer.append(listFile.getName())
+                        stringBuffer.append(listFile.getName    ())
                                 .append("\r\n");
                     }
                 }
@@ -214,13 +212,10 @@ public class CommandInfosSingle {
                         // 请求发送完毕套接字得关闭
                         try {
                             SocketChannelUtils.writeData(dataTransferSocketChannel, stringBuffer.toString());
-                        } finally {
-                            try {
-                                dataTransferSocketChannel.close();
-                                connection.setDataTransferSocketChannel(null);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
+                            dataTransferSocketChannel.close();
+                            connection.setDataTransferSocketChannel(null);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
 
                         break;
@@ -242,6 +237,35 @@ public class CommandInfosSingle {
                 nativeFileSystem.setCurrentFile(nativeFileSystem.getCurrentFile().getParentFile());
 
                 SocketChannelUtils.writeData(socketChannel, "200 cwd parent done.\r\n");
+            }
+        });
+
+        commandInfoMap.put("STOR", new CommandInfo() {
+            @Override
+            public void run(SocketChannel socketChannel, String value, Object pram) {
+                if (!checkConnectionPermission(pram)) {
+                    responseAccessDenied(socketChannel);
+                }
+
+                Connection connection = (Connection) pram;
+                SocketChannel dataTransferSocketChannel = connection.getDataTransferSocketChannel();
+
+
+                ByteBuffer allocate = ByteBuffer.allocate(1024);
+                try {
+                    FileOutputStream fileOutputStream = new FileOutputStream(connection.getNativeFileSystem().getCurrentFile() + "/" + value);
+
+                    int size = dataTransferSocketChannel.read(allocate);
+                    while (size > 0) {
+                        size = dataTransferSocketChannel.read(allocate);
+                    }
+                    fileOutputStream.write(allocate.get());
+                    dataTransferSocketChannel.close();
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
             }
         });
 

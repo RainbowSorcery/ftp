@@ -6,6 +6,7 @@ import com.lyra.single.CommandInfosSingle;
 import com.lyra.system.NativeFileSystem;
 import com.lyra.system.impl.NativeFileSystemImpl;
 import com.lyra.utils.CommandUtils;
+import com.lyra.utils.SocketChannelUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -74,7 +75,6 @@ public class FTPServer {
                         if (currentSelect.isAcceptable()) {
                             ServerSocketChannel clientServerSocketChannel = (ServerSocketChannel) currentSelect.channel();
                             System.out.println("服务端连接到客户端，服务端IP:" + clientServerSocketChannel.getLocalAddress());
-
                             SocketChannel accept = clientServerSocketChannel.accept();
                             Connection connection = new Connection();
                             // 设置初始文件目录
@@ -83,10 +83,8 @@ public class FTPServer {
                             connection.setAuth(false);
                             // 默认传输类型为ASCII
                             connection.setAscii(true);
-
                             connectionMap.put(accept.getRemoteAddress().toString(), connection);
                             connection.connectionSuccessful(accept);
-
                             accept.configureBlocking(false);
                             accept.register(selector, SelectionKey.OP_READ);
 
@@ -96,30 +94,32 @@ public class FTPServer {
                             SocketChannel channel = (SocketChannel) currentSelect.channel();
 
                             ByteBuffer allocate = ByteBuffer.allocate(1024);
-                            int read = channel.read(allocate);
+
+                            int read = 0;
+                            try {
+                                read = channel.read(allocate);
+                            } catch (IOException e) {
+                                connectionMap.remove(channel.getRemoteAddress().toString());
+                                channel.close();
+                            }
                             if (read > 0) {
                                 allocate.flip();
                                 byte[] bytes = new byte[allocate.remaining()];
 
                                 allocate.get(bytes);
-
-
                                 Connection connection = connectionMap.get(channel.getRemoteAddress().toString());
-
                                 String readLine = new String(bytes);
-
                                 System.out.println(readLine);
-
                                 Map<String, String> commandProcessMap = CommandUtils.processCommand(readLine);
                                 String key = commandProcessMap.get("key");
                                 String value = commandProcessMap.get("value");
-
                                 CommandInfo commandInfo = CommandInfosSingle.getCommandInfoMap(key);
                                 if (commandInfo != null) {
                                     commandInfo.run(channel, value, connection);
+                                } else {
+                                    SocketChannelUtils.writeData(channel, "500 命令不存在\r\n");
                                 }
                             }
-
                         }
                     }
                     keyIterator.remove();
