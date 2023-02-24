@@ -3,6 +3,7 @@ package com.lyra.single;
 import com.lyra.entity.CommandInfo;
 import com.lyra.entity.Connection;
 import com.lyra.server.DataChannelThread;
+import com.lyra.singleton.ThreadPoolSingleton;
 import com.lyra.system.NativeFileSystem;
 import com.lyra.utils.DateUtils;
 import com.lyra.utils.SocketChannelUtils;
@@ -13,24 +14,25 @@ import java.nio.channels.SocketChannel;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class CommandInfosSingle {
-    private static Map<String, CommandInfo> commandInfoMap;
+    private static final Map<String, CommandInfo> commandInfoMap;
 
     static {
         commandInfoMap = new HashMap<>();
         commandInfoMap.put("USER", new CommandInfo() {
             @Override
             public void run(SocketChannel socketChannel, String value, Object pram) {
-                if (pram instanceof Connection) {
-                    String responseBodyBytes = null;
+                if (pram instanceof Connection connection) {
+                    String responseBodyBytes;
 
                     if (value.equals("lyra") || value.equals("anonymous")) {
                         responseBodyBytes = "331 username is right, Please input password.\r\n";
                     } else {
                         responseBodyBytes = "530 username is not found.\r\n";
                     }
-                    Connection connection = (Connection) pram;
                     connection.setUsername(value);
                     SocketChannelUtils.writeData(socketChannel, responseBodyBytes);
                 } else {
@@ -73,7 +75,7 @@ public class CommandInfosSingle {
         commandInfoMap.put("PASS", new CommandInfo() {
             @Override
             public void run(SocketChannel socketChannel, String value, Object pram) {
-                String responseBody = "";
+                String responseBody;
                 Connection connection = (Connection) pram;
                 connection.setPassword(value);
                 if (connection.getUsername().equals("lyra") && connection.getPassword().equals("365373011")) {
@@ -98,7 +100,7 @@ public class CommandInfosSingle {
 
                 NativeFileSystem nativeFileSystem = connection.getNativeFileSystem();
 
-                String currentPath = "";
+                String currentPath;
 
                 if (nativeFileSystem.getCurrentFile() == null) {
                     currentPath = nativeFileSystem.getRootPath();
@@ -170,9 +172,9 @@ public class CommandInfosSingle {
                 Connection connection = (Connection) pram;
 
                 // 阻塞 知道channel建立完毕 也就是Connect给i哦那中dataTransferSocket成员变量赋值完成
-                // todo 使用线程池进行优化
                 DataChannelThread dataChannelThread = new DataChannelThread(connection, socketChannel);
-                new Thread(dataChannelThread).start();
+                ThreadPoolExecutor threadPoolExecutor = ThreadPoolSingleton.getSingleton();
+                threadPoolExecutor.execute(dataChannelThread);
             }
         });
 
@@ -191,7 +193,7 @@ public class CommandInfosSingle {
                 File file = new File(path);
                 StringBuilder stringBuffer = new StringBuilder();
                 if (file.listFiles() != null) {
-                    for (File listFile : file.listFiles()) {
+                    for (File listFile : Objects.requireNonNull(file.listFiles())) {
                         stringBuffer.append(DateUtils.format(new Date(listFile.lastModified()), "yyyy/MM/dd  hh:mm:ss"));
 
                         if (listFile.isDirectory()) {
@@ -208,7 +210,6 @@ public class CommandInfosSingle {
                 while (true) {
                     SocketChannel dataTransferSocketChannel = connection.getDataTransferSocketChannel();
                     if (dataTransferSocketChannel != null) {
-                        String responseBody = "";
                         // 请求发送完毕套接字得关闭
                         try {
                             SocketChannelUtils.writeData(dataTransferSocketChannel, stringBuffer.toString());
